@@ -1,0 +1,83 @@
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+#meMessageBox {
+    font-size: 16px;
+    display: inline-block;
+}
+
+#messageBox {
+    font-size: 16px;
+    text-align: left;
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+
+#meMessage {
+    border-radius: 25px;
+    background-color: lightgray;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-bottom: 15px;
+    padding-top: 15px;
+    font-size: 27px;
+}
+
+#message {
+    border-radius: 25px;
+    background-color: red;
+    padding-right: 30px;
+    padding-left: 30px;
+    padding-bottom: 15px;
+    padding-top: 15px;
+    font-size: 27px;
+}
+
+#messagesBuble {
+    margin: auto;
+    width: 75%;
+    min-height: 50%;
+    height: 50%;
+    border: 2px solid darkgrey;
+    padding: 10px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: absolute;
+    bottom: 30%;
+    right: 5%;
+    /* left: 12.5%; */
+}
+
+#conversation {
+    width: 90%;
+    padding-bottom: 30px;
+    position: absolute;
+    top: 10%;
+    left: 5%;
+}
+
+#newUser {
+    font-style: italic;
+    font-size: 14px;
+}
+
+#sender,
+#me {
+    font-weight: bold;
+}
+
+#sender {
+    width: 100%;
+    text-align: left;
+    padding-left: 25px;
+}
+
+#me {
+    width: 100%;
+    text-align: left;
+    padding-left: 25px;
+}

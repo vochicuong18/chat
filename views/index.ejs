@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>chat</title>
+</head>
+
+<body>
+    <h1>The Imessage killer</h1>
+    <input id='messageInput' type='text' autocomplete="off" value='Nhập tin nhắn' autofocus>
+    <input id='submit' type='button' value='Gửi'>
+    <br>
+    <div id='messagesBuble'>
+        <div id='conversation'>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <script>
+        var socket = io();
+        var client;
+        var messageInput = document.getElementById('messageInput');
+        var messageBuble = document.getElementById('messagesBuble');
+        var conversationDiv = document.getElementById('conversation');
+        var submit = document.getElementById('submit');
+        var socket = io.connect('http://localhost:3000');
+
+        var lastSender; //to know if we create a new message or append to the last one
+        var lastMessageNode;
+        var lastMessageContainer; //scale up
+        var lastMessageBox;
+
+        var message = '';
+
+        var messageMaxWidth = 25;
+
+        while (client === undefined || client === null) {
+            var client = prompt('Nhập tên: ');
+        }
+
+        socket.emit('pseudo', client);
+
+        submit.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log(messageInput.value);
+            console.log('sending message...');
+            if (validMessage(message) === true) {
+                displayMessage(message, 'moi', true);
+                sendMessage(message);
+                messageInput.value = '';
+            } else {
+                var array = messageInput.value.split('');
+                var string = '';
+                if (array.length > 1000) {
+                    for (var i = 0; i < 1000; i++) {
+                        string += array[i];
+                    }
+                    console.log(string.length);
+                    messageInput.value = string;
+                    console.log(messageInput.value);
+                } else {
+                    messageInput.value = '';
+                }
+            }
+        });
+        messageInput.addEventListener('focus', function() {
+            if (messageInput.value == 'Nhập tin nhắn') {
+                messageInput.value = '';
+            }
+        });
+        messageInput.addEventListener('focusout', function() {
+            if (messageInput.value == '') {
+                messageInput.value = 'Nhập tin nhắn';
+            }
+        });
+        messageInput.addEventListener('keyup', function(e) {
+            if (messageInput.value != 'Nhập tin nhắn') {
+                message = messageInput.value;
+            }
+            if (e.keyCode == 13) {
+                if (validMessage(message) === true) {
+                    displayMessage(message, 'moi', true);
+                    sendMessage(message);
+                    messageInput.value = '';
+                } else {
+                    var array = messageInput.value.split('');
+                    var string = '';
+                    if (array.length > 1000) {
+                        for (var i = 0; i < 1000; i++) {
+                            string += array[i];
+                        }
+                        console.log(string.length);
+                        messageInput.value = string;
+                        console.log(messageInput.value);
+                    } else {
+                        messageInput.value = '';
+                    }
+                }
+            }
+        });
+
+        socket.on('newMessage', function(message) {
+            console.log('received message !');
+            displayMessage(message.message, message.sender, false)
+        });
+
+        socket.on('newUser', function(message) {
+            var newUserDiv = document.createElement('div');
+            newUserDiv.id = 'newUser';
+            newUserDiv.appendChild(document.createTextNode(message));
+            conversationDiv.appendChild(document.createElement('br'));
+            conversationDiv.appendChild(newUserDiv);
+            conversationDiv.appendChild(document.createElement('br'));
+            conversationDiv.scrollIntoView(false);
+            messageBuble.scrollBy(0, 200);
+            lastSender = null;
+        });
+
+        var displayMessage = function(message, sender, itsMe) {
+            if (lastSender == sender) {
+                messageArray = reShapeMessage(message);
+                for (var i = 0; i < messageArray.length; i++) {
+                    lastMessageNode.appendChild(document.createElement('br'));
+                    lastMessageNode.appendChild(document.createTextNode(messageArray[i]));
+                }
+                var _size = lastMessageBox.clientHeight;
+                console.log('last message box is ' + _size + 'px long');
+                lastMessageContainer.style.height = _size + 'px';
+                lastMessageNode.scrollIntoView(false);
+                messageBuble.scrollBy(0, 200);
+            } else {
+                var messageBox = document.createElement('div');
+                var messageDiv = document.createElement('div');
+                var senderSpan = document.createElement('div');
+                var messageSpan = document.createElement('span');
+                var messageBoxContainer = document.createElement('div');
+
+                conversationDiv.id = 'conversation';
+                messageBox.id = (itsMe == true) ? 'meMessageBox' : 'messageBox';
+                messageDiv.id = (itsMe == true) ? 'meMessage' : 'message';
+                messageSpan.id = 'msgSpan';
+                senderSpan.id = (itsMe == true) ? 'me' : 'sender';
+
+                messageArray = reShapeMessage(message);
+                messageSpan.appendChild(document.createTextNode(messageArray[0]));
+                for (var i = 1; i < messageArray.length; i++) {
+                    messageSpan.appendChild(document.createElement('br'));
+                    messageSpan.appendChild(document.createTextNode(messageArray[i]));
+                }
+                senderSpan.appendChild(document.createTextNode(sender + ': '));
+
+                messageDiv.appendChild(messageSpan);
+                messageBox.appendChild(senderSpan);
+                messageBox.appendChild(messageDiv);
+                messageBoxContainer.appendChild(messageBox);
+                conversationDiv.appendChild(messageBoxContainer);
+                conversationDiv.appendChild(document.createElement('br'));
+
+
+                console.log(messageBox.clientHeight);
+                var size = messageBox.clientHeight;
+                messageBoxContainer.style.height = size + 'px';
+
+                messageBox.scrollIntoView(false);
+                messageBuble.scrollBy(0, 200);
+
+                lastMessageContainer = messageBoxContainer;
+
+                lastMessageBox = messageBox;
+                lastMessageNode = messageSpan;
+            }
+            lastSender = sender;
+        }
+
+        var validMessage = function(message) { // si le message est valide
+            var stringArray = message.split('');
+            var counter = 0;
+            if (message.split('').length > 1000) {
+                alert('this message is too big, don\'t type so much !')
+                return false; // si le message est trop volumineux
+
+            }
+            for (var i = 0; i < stringArray.length; i++) {
+                if (stringArray[i] != ' ') {
+                    return true; //si le message n est pas composé que d'espaces
+                }
+            }
+            return false;
+        }
+
+        var reShapeMessage = function(message) { //permet d ajouter des retour a la ligne pour que
+            messageArray = message.split(' '); //le message ne soit pas trop long sur une ligne
+            console.log(messageArray);
+            var returnArray = [];
+            var currentMessage = 0;
+            returnArray.push('');
+            if (message.split('').length <= messageMaxWidth) {
+                returnArray[currentMessage] = message;
+                return returnArray;
+            } else {
+                var charactereCounter = 0;
+                for (var i = 0; i < messageArray.length; i++) {
+                    if (messageArray[i].split('').length < messageMaxWidth - charactereCounter) {
+                        returnArray[currentMessage] += messageArray[i] + ' ';
+                        charactereCounter += messageArray[i].split('').length + 1;
+                    } else {
+                        var charactereArray = messageArray[i].split('');
+                        if (charactereArray.length < messageMaxWidth) {
+                            currentMessage += 1;
+                            returnArray.push('');
+                            returnArray[currentMessage] += messageArray[i] + ' ';
+                            charactereCounter = messageArray[i].length + 1;
+                        } else {
+                            var h = 0;
+                            var firstLine = true;
+                            for (; h < charactereArray.length; h += messageMaxWidth) {
+                                if (charactereArray.length - h < messageMaxWidth) {
+                                    break;
+                                }
+                                if (!firstLine) {
+                                    currentMessage += 1;
+                                    returnArray.push('');
+
+                                    for (var j = h; j < h + messageMaxWidth; j++) {
+                                        returnArray[currentMessage] += charactereArray[j];
+                                    }
+                                } else {
+                                    for (var j = h; j < h + messageMaxWidth; j++) {
+                                        returnArray[currentMessage] += charactereArray[j];
+                                    }
+                                    firstLine = false;
+                                }
+                            }
+                            currentMessage += 1;
+                            returnArray.push('');
+                            for (var y = h; y < charactereArray.length; y++) {
+                                returnArray[currentMessage] += charactereArray[y];
+                            }
+                            returnArray[currentMessage] += ' ';
+                            charactereCounter = (charactereArray.length - h) + 1;
+                            console.log('number of characteres in last line: ' + charactereCounter);
+                        }
+                    }
+                }
+            }
+            console.log(returnArray);
+            return returnArray; //return array of all the messages, one element = one line for message
+        }
+
+        var sendMessage = function(message) {
+            socket.emit('newMessage', message);
+        }
+    </script>
+</body>
+
+</html>
